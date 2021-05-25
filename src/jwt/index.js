@@ -6,13 +6,27 @@ const app = express()
 app.use(express.json())
 // app.use(cors())
 
+// use function to verify token 
+function verifyJWT(req, res, next){
+    const token = req.headers['x-access-token']
+    if (!token) return res.status(401).json({auth: false, message: 'no token provided.'})
+
+    jwt.verify(token, process.env.SECRET, function(err, decoded){
+        if (err) return res.status(500).json({auth: false, message: 'Faile to authenticate'})
+
+        // if all is ok save the request to use
+        req.userId = decoded.id
+        next()
+    })
+}
+
 // rota inicial
 app.get('/', (req, res, next) => {
     res.json({msg: 'server online'})
 })
 
 // simulando retorno de todos os clientes
-app.get('/clientes', (req, res, next) => {
+app.get('/clientes', verifyJWT, (req, res, next) => {
     res.json([{id: 1, nome: 'Test'}])
 })
 
